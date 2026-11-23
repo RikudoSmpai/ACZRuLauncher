@@ -381,8 +381,9 @@
         </StackPanel>
 
         <!-- версия и марка студии справа -->
+        <!-- под кнопками окна: «перевод ГГГГ.ММ.ДД-N» длиннее «dev» и легла бы под «О программе» (acz-v1.0.0) -->
         <TextBlock Text="{Binding Version}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="#d2bdb6"
-                   HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,24,0" IsHitTestVisible="False"/>
+                   HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,29,24,0" IsHitTestVisible="False"/>
         <StackPanel Width="60" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,44,28,0" IsHitTestVisible="False">
           <!-- знак студии в золоте палитры: та же картинка, перекрашенная (vgs-logo-gold.png) -->
           <Image Width="60" Height="60" Source="avares://ACZRuLauncher/Assets/vgs-logo-gold.png" Stretch="Uniform"/>
