@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>ACZRuLauncher.Core</RootNamespace>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <!-- Модуль acz.exe (module\build.cmd). Нет файла — лаунчер собирается без модуля и его не ставит. -->
+  <ItemGroup Condition="Exists('..\..\module\build\version.dll')">
+    <EmbeddedResource Include="..\..\module\build\version.dll" LogicalName="ACZRuLauncher.Core.module.version.dll" />
+  </ItemGroup>
+
+  <!-- Канал обновлений: release (GitHub, по умолчанию) или dev (-p:AczChannel=dev -p:AczDevFeedUrl=https://…/latest.json).
+       Адрес ленты закрытый: только из командной строки сборки, в репозиторий не пишется. См. UpdateChannel.cs. -->
+  <PropertyGroup>
+    <AczChannel Condition="'$(AczChannel)' == ''">release</AczChannel>
+    <DefineConstants Condition="'$(AczChannel)' == 'dev'">$(DefineConstants);DEV_CHANNEL</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>AczChannel</_Parameter1>
+      <_Parameter2>$(AczChannel)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'$(AczChannel)' == 'dev'">
+      <_Parameter1>AczDevFeedUrl</_Parameter1>
+      <_Parameter2>$(AczDevFeedUrl)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <Target Name="AczCheckChannel" BeforeTargets="CoreCompile">
+    <Error Condition="'$(AczChannel)' != 'release' And '$(AczChannel)' != 'dev'"
+           Text="AczChannel='$(AczChannel)': допустимо release или dev." />
+    <Error Condition="'$(AczChannel)' == 'dev' And !$([System.Text.RegularExpressions.Regex]::IsMatch('$(AczDevFeedUrl)', '^https://[^/\s]+/\S*$'))"
+           Text="Сборка DEV без ленты обновлений: передайте -p:AczDevFeedUrl=https://…/latest.json (адрес закрытый, в репозиторий его не писать)." />
+  </Target>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ACZRuLauncher.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+bin/
+obj/
+.vs/
+*.user
+dist/
+assets/_*.png
+
+# скриншоты окна (--shot) — локально; в репо только sheet.png
+shots/*
+!shots/sheet.png
+# пакет перевода в репозиторий не кладётся (см. pack/manifest.json)
+acz-ru-pack*.zip
+pack/*.zip
+assets/
+
+# модуль acz.exe: результат module\build.cmd
+module/build/

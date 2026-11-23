@@ -1,0 +1,9 @@
+{
+  "_comment": "Пакет перевода acz-ru-pack/1 для сборки релиза. Сам пакет в репозиторий не кладётся: CI скачивает его по ссылке, сверяет sha256 и размер и вшивает в exe (tools/fetch_pack.py, tools/pack.py). url — ЗАГЛУШКА: заменить на ссылку на zip (или указать asset_id ассета черновика релиза этого репозитория). sha256/size — текущей сборки acz-ru-pack-2026.11.13-1.zip; новый пакет = новые sha256/size + новый тег acz-vX.Y.Z.",
+  "name": "acz-ru-pack.zip",
+  "version": "2026.11.13-1",
+  "url": "ЗАГЛУШКА: https://…/acz-ru-pack-2026.11.13-1.zip",
+  "asset_id": null,
+  "sha256": "1397e295ff5cedb63d2578c3e77e6572e1e7b37d42e28d5c4f68fc8c4d11b1ad",
+  "size": 2365140
+}

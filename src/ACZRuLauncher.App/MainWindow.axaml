@@ -1,0 +1,619 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:ACZRuLauncher"
+        x:Class="ACZRuLauncher.MainWindow"
+        Title="{Binding WindowTitle}"
+        Icon="avares://ACZRuLauncher/Assets/app.ico"
+        Width="720" Height="460" CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        FontFamily="Segoe UI"
+        FontSize="14"
+        Foreground="#e9dad6">
+
+  <Window.Resources>
+    <FontFamily x:Key="Mono">Cascadia Code, Consolas, Courier New</FontFamily>
+    <!-- Иконки: 24×24, один контур -->
+    <StreamGeometry x:Key="IconChevron">M9 6 L15 12 L9 18</StreamGeometry>
+    <StreamGeometry x:Key="IconInstall">M4 12 H19 M13 6 L19 12 L13 18</StreamGeometry>
+    <StreamGeometry x:Key="IconPlay">M8 5 L19 12 L8 19 Z</StreamGeometry>
+    <StreamGeometry x:Key="IconError">M8 3 L3 8 V16 L8 21 H16 L21 16 V8 L16 3 Z M12 7 V13 M12 16 V17</StreamGeometry>
+    <StreamGeometry x:Key="IconLeft">M15 6 L9 12 L15 18</StreamGeometry>
+    <StreamGeometry x:Key="IconFolder">M3 7 V5 H9 L12 8 H21 V20 H3 V7 Z M3 11 H21</StreamGeometry>
+  </Window.Resources>
+
+  <Window.Styles>
+    <!-- главная кнопка -->
+    <Style Selector="Button.primary">
+      <Setter Property="Height" Value="72"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="#ddb167"/>
+      <Setter Property="Foreground" Value="#f5e3c7"/>
+      <Setter Property="Padding" Value="48,0"/>
+      <Setter Property="Background">
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+          <GradientStop Color="#993a1e10" Offset="0"/>
+          <GradientStop Color="#a630150b" Offset="1"/>
+        </LinearGradientBrush>
+      </Setter>
+      <Setter Property="Transitions">
+        <Transitions>
+          <BrushTransition Property="BorderBrush" Duration="0:0:0.16"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background">
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+          <GradientStop Color="#b0572c18" Offset="0"/>
+          <GradientStop Color="#c0442111" Offset="1"/>
+        </LinearGradientBrush>
+      </Setter>
+      <Setter Property="BorderBrush" Value="#f7d59a"/>
+    </Style>
+    <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="RenderTransform" Value="translateY(1px)"/>
+    </Style>
+    <Style Selector="Button.primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#2c1610"/>
+      <Setter Property="BorderBrush" Value="#5e453b"/>
+      <Setter Property="Foreground" Value="#a18b85"/>
+      <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <!-- прозрачные кнопки-раскрытия -->
+    <Style Selector="Button.flat">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="Button.flat /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Transitions">
+        <Transitions><BrushTransition Property="Background" Duration="0:0:0.15"/></Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Button.flat:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#06eeb169"/>
+    </Style>
+    <Style Selector="Button.flat:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#0ceeb169"/>
+    </Style>
+    <Style Selector="Button.flat TextBlock.summary">
+      <Setter Property="Foreground" Value="#b79e95"/>
+      <Setter Property="Transitions">
+        <Transitions><BrushTransition Property="Foreground" Duration="0:0:0.15"/></Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Button.flat:pointerover TextBlock.summary">
+      <Setter Property="Foreground" Value="#fad9a6"/>
+    </Style>
+    <Style Selector="Button.flat Path.chevron">
+      <Setter Property="Stroke" Value="#b09988"/>
+      <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+      <Setter Property="Transitions">
+        <Transitions>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18"/>
+          <BrushTransition Property="Stroke" Duration="0:0:0.15"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Button.flat:pointerover Path.chevron">
+      <Setter Property="Stroke" Value="#face89"/>
+    </Style>
+    <Style Selector="Path.chevron.open">
+      <Setter Property="RenderTransform" Value="rotate(90deg)"/>
+    </Style>
+
+    <!-- тумблер компонента: 32×18, квадратный ползунок -->
+    <Style Selector="ToggleButton.switch">
+      <Setter Property="Width" Value="32"/>
+      <Setter Property="Height" Value="18"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Grid>
+            <Border Name="track" CornerRadius="3" BorderThickness="1" BorderBrush="#644b42" Background="#2c1812">
+              <Border.Transitions>
+                <Transitions>
+                  <BrushTransition Property="BorderBrush" Duration="0:0:0.16"/>
+                  <BrushTransition Property="Background" Duration="0:0:0.16"/>
+                </Transitions>
+              </Border.Transitions>
+            </Border>
+            <Border Name="knob" Width="10" Height="10" CornerRadius="1" Background="#9f867b"
+                    HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,3,0,0">
+              <Border.Transitions>
+                <Transitions>
+                  <ThicknessTransition Property="Margin" Duration="0:0:0.16"/>
+                  <BrushTransition Property="Background" Duration="0:0:0.16"/>
+                </Transitions>
+              </Border.Transitions>
+            </Border>
+          </Grid>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="ToggleButton.switch:checked /template/ Border#track">
+      <Setter Property="BorderBrush" Value="#d6aa66"/>
+      <Setter Property="Background" Value="#482b14"/>
+      <Setter Property="BoxShadow" Value="0 0 10 0 #1cedaf4f"/>
+    </Style>
+    <Style Selector="ToggleButton.switch:checked /template/ Border#knob">
+      <Setter Property="Margin" Value="17,3,0,0"/>
+      <Setter Property="Background" Value="#f6dba4"/>
+      <Setter Property="BoxShadow" Value="0 0 6 0 #30edbf70"/>
+    </Style>
+    <Style Selector="ToggleButton.switch:pointerover /template/ Border#track">
+      <Setter Property="BorderBrush" Value="#fad9a6"/>
+    </Style>
+    <Style Selector="ToggleButton.switch:disabled">
+      <Setter Property="Opacity" Value="0.55"/>
+    </Style>
+
+    <!-- поле пути и кнопка «Обзор» -->
+    <Style Selector="TextBox.path">
+      <Setter Property="Height" Value="38"/>
+      <Setter Property="MinHeight" Value="38"/>
+      <Setter Property="FontFamily" Value="{StaticResource Mono}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Foreground" Value="#d6c3bd"/>
+      <Setter Property="Background" Value="#180606"/>
+      <Setter Property="BorderBrush" Value="#4f3530"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="3"/>
+      <Setter Property="Padding" Value="10,0"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="SelectionBrush" Value="#6b3e27"/>
+      <Setter Property="CaretBrush" Value="#fad9a6"/>
+    </Style>
+    <Style Selector="TextBox.path:pointerover /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="#7e6253"/>
+      <Setter Property="Background" Value="#180606"/>
+    </Style>
+    <Style Selector="TextBox.path:focus /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="#deb26c"/>
+      <Setter Property="Background" Value="#180606"/>
+    </Style>
+    <Style Selector="TextBox.path.invalid /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="#845345"/>
+    </Style>
+    <Style Selector="TextBox.path.invalid:focus /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="#d79075"/>
+    </Style>
+    <Style Selector="Button.browse">
+      <Setter Property="Height" Value="38"/>
+      <Setter Property="Width" Value="92"/>
+      <Setter Property="CornerRadius" Value="3"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="#64493c"/>
+      <Setter Property="Background" Value="#311611"/>
+      <Setter Property="Foreground" Value="#d7c3b7"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Padding" Value="0"/>
+    </Style>
+    <Style Selector="Button.browse:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#412114"/>
+      <Setter Property="BorderBrush" Value="#dfb370"/>
+      <Setter Property="Foreground" Value="#ffebce"/>
+    </Style>
+    <Style Selector="Button.browse:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#522d19"/>
+    </Style>
+
+    <!-- кнопки окна (свернуть/закрыть) в углу шапки -->
+    <!-- «О программе» в углу шапки: заметнее кнопок окна, золото палитры -->
+    <Style Selector="Button.about">
+      <Setter Property="Height" Value="22"/>
+      <Setter Property="Padding" Value="8,0"/>
+      <Setter Property="CornerRadius" Value="3"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="#96713f"/>
+      <Setter Property="Background" Value="#d9301710"/>
+      <Setter Property="Foreground" Value="#f2d39c"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontWeight" Value="Medium"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.about:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#412114"/>
+      <Setter Property="BorderBrush" Value="#dfb370"/>
+      <Setter Property="Foreground" Value="#ffebce"/>
+    </Style>
+    <Style Selector="Button.about:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#522d19"/>
+    </Style>
+
+    <Style Selector="Button.win">
+      <Setter Property="Width" Value="26"/>
+      <Setter Property="Height" Value="18"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Foreground" Value="#a2867d"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.win:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#14eeb169"/>
+      <Setter Property="Foreground" Value="#ffebce"/>
+    </Style>
+    <Style Selector="Button.win.close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#33e18a70"/>
+      <Setter Property="Foreground" Value="#ffe9e0"/>
+    </Style>
+    <!-- второстепенные действия под кнопкой: «Удалить перевод», «Что ставится», «Проверить снова» -->
+    <Style Selector="Button.link">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="8,4"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="#b79e95"/>
+      <Setter Property="FontSize" Value="11"/>
+    </Style>
+    <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#0ceeb169"/>
+      <Setter Property="Foreground" Value="#fad9a6"/>
+    </Style>
+    <Style Selector="Button.link.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#14e18a70"/>
+      <Setter Property="Foreground" Value="#efb29f"/>
+    </Style>
+  </Window.Styles>
+
+  <!-- корпус окна: 720×460, скруглённый -->
+  <Border Margin="0" CornerRadius="12" BorderThickness="1" BorderBrush="#4b3834" Background="#210c0b" ClipToBounds="True">
+    <Grid RowDefinitions="184,*,Auto">
+
+      <!-- ЭТАЖ 1. Шапка: закат в дыму, векторы свои (ни картинки, ни логотипа игры — Bandai шлёт DMCA за файлы из игр);
+           цвета — по заставке Zero: тёмно-красный дым, бронза и золото -->
+      <Grid Grid.Row="0" ClipToBounds="True" PointerPressed="Header_PointerPressed">
+        <Grid.Background>
+          <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+            <GradientStop Color="#2c110f" Offset="0"/>
+            <GradientStop Color="#48231d" Offset="0.55"/>
+            <GradientStop Color="#4a3f3c" Offset="0.86"/>
+            <GradientStop Color="#6b4a35" Offset="1"/>
+          </LinearGradientBrush>
+        </Grid.Background>
+        <Canvas IsHitTestVisible="False">
+          <!-- дым: крупные пятна тёмно-красного -->
+          <Ellipse Canvas.Left="-120" Canvas.Top="-90" Width="460" Height="280">
+            <Ellipse.Fill><RadialGradientBrush><GradientStop Color="#5a6e150e" Offset="0"/><GradientStop Color="#006e150e" Offset="1"/></RadialGradientBrush></Ellipse.Fill>
+          </Ellipse>
+          <Ellipse Canvas.Left="250" Canvas.Top="-70" Width="420" Height="230">
+            <Ellipse.Fill><RadialGradientBrush><GradientStop Color="#4c8a2014" Offset="0"/><GradientStop Color="#008a2014" Offset="1"/></RadialGradientBrush></Ellipse.Fill>
+          </Ellipse>
+          <Ellipse Canvas.Left="80" Canvas.Top="70" Width="560" Height="200">
+            <Ellipse.Fill><RadialGradientBrush><GradientStop Color="#46651510" Offset="0"/><GradientStop Color="#00651510" Offset="1"/></RadialGradientBrush></Ellipse.Fill>
+          </Ellipse>
+          <Ellipse Canvas.Left="520" Canvas.Top="20" Width="300" Height="170">
+            <Ellipse.Fill><RadialGradientBrush><GradientStop Color="#38a52a16" Offset="0"/><GradientStop Color="#00a52a16" Offset="1"/></RadialGradientBrush></Ellipse.Fill>
+          </Ellipse>
+          <!-- солнце у горизонта -->
+          <Ellipse Canvas.Left="430" Canvas.Top="120" Width="240" Height="140">
+            <Ellipse.Fill>
+              <RadialGradientBrush>
+                <GradientStop Color="#a8e07a3c" Offset="0"/>
+                <GradientStop Color="#00e6a165" Offset="1"/>
+              </RadialGradientBrush>
+            </Ellipse.Fill>
+          </Ellipse>
+          <!-- облачные полосы -->
+          <Rectangle Canvas.Left="250" Canvas.Top="150" Width="470" Height="2" Fill="#26f3c79a"/>
+          <Rectangle Canvas.Left="330" Canvas.Top="160" Width="390" Height="1" Fill="#1cf3c79a"/>
+          <Rectangle Canvas.Left="280" Canvas.Top="171" Width="440" Height="1" Fill="#14f3c79a"/>
+          <!-- два инверсионных следа, расходятся «ножницами» -->
+          <Path Data="M720 40 C 640 52, 560 70, 470 104" Stroke="#3ff0e1db" StrokeThickness="1.4"/>
+          <Path Data="M720 58 C 650 62, 580 80, 500 110" Stroke="#2af0e1db" StrokeThickness="1"/>
+          <Path Data="M470 104 l -7 3 l 3 -5 z" Fill="#b0f0e1db"/>
+          <Path Data="M500 110 l -7 3 l 3 -5 z" Fill="#90f0e1db"/>
+        </Canvas>
+        <Rectangle IsHitTestVisible="False">
+          <Rectangle.Fill>
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+              <GradientStop Color="#d0270c0b" Offset="0"/>
+              <GradientStop Color="#40331310" Offset="0.5"/>
+              <GradientStop Color="#00381814" Offset="1"/>
+            </LinearGradientBrush>
+          </Rectangle.Fill>
+        </Rectangle>
+        <Rectangle IsHitTestVisible="False">
+          <Rectangle.Fill>
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+              <GradientStop Color="#00210c0b" Offset="0.78"/>
+              <GradientStop Color="#e0210c0b" Offset="1"/>
+            </LinearGradientBrush>
+          </Rectangle.Fill>
+        </Rectangle>
+
+        <!-- название -->
+        <StackPanel Width="290" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="34,30,0,0" IsHitTestVisible="False">
+          <TextBlock Text="ACE COMBAT" FontSize="10" FontWeight="Light" LetterSpacing="6" Foreground="#ead2a6"
+                     HorizontalAlignment="Center" Margin="6,0,0,6"/>
+          <Rectangle Height="1">
+            <Rectangle.Fill>
+              <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#00deb373" Offset="0"/>
+                <GradientStop Color="#75deb373" Offset="0.08"/>
+                <GradientStop Color="#75deb373" Offset="0.92"/>
+                <GradientStop Color="#00deb373" Offset="1"/>
+              </LinearGradientBrush>
+            </Rectangle.Fill>
+          </Rectangle>
+          <TextBlock Text="ZERO" FontSize="44" FontWeight="Light" LetterSpacing="22"
+                     HorizontalAlignment="Center" Margin="22,0,0,0">
+            <TextBlock.Foreground>
+              <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#f6dfae" Offset="0"/>
+                <GradientStop Color="#d9a65e" Offset="0.6"/>
+                <GradientStop Color="#b47a3c" Offset="1"/>
+              </LinearGradientBrush>
+            </TextBlock.Foreground>
+          </TextBlock>
+          <TextBlock Text="THE BELKAN WAR" FontSize="8" LetterSpacing="4" Foreground="#d9b886"
+                     HorizontalAlignment="Center" Margin="4,0,0,8"/>
+          <Rectangle Height="1">
+            <Rectangle.Fill>
+              <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#00deb373" Offset="0"/>
+                <GradientStop Color="#75deb373" Offset="0.08"/>
+                <GradientStop Color="#75deb373" Offset="0.92"/>
+                <GradientStop Color="#00deb373" Offset="1"/>
+              </LinearGradientBrush>
+            </Rectangle.Fill>
+          </Rectangle>
+          <TextBlock Text="РУССКИЙ ПЕРЕВОД" FontSize="8" LetterSpacing="2.4" Foreground="#e8c39f"
+                     HorizontalAlignment="Center" Margin="2.4,10,0,0"/>
+        </StackPanel>
+
+        <!-- версия и марка студии справа -->
+        <TextBlock Text="{Binding Version}" FontFamily="{StaticResource Mono}" FontSize="10" Foreground="#d2bdb6"
+                   HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,24,0" IsHitTestVisible="False"/>
+        <StackPanel Width="60" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,44,28,0" IsHitTestVisible="False">
+          <!-- знак студии в золоте палитры: та же картинка, перекрашенная (vgs-logo-gold.png) -->
+          <Image Width="60" Height="60" Source="avares://ACZRuLauncher/Assets/vgs-logo-gold.png" Stretch="Uniform"/>
+          <TextBlock Text="STUDIO" FontSize="7" FontWeight="Medium" LetterSpacing="2" Foreground="#e3c8a2"
+                     HorizontalAlignment="Center" Margin="2,3,0,0"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,6,0" Spacing="2">
+          <!-- «О программе» — подписанная кнопка с акцентом (как в PW 1.0.8: голую «i» не находили) -->
+          <Button Classes="about" Click="About_Click" ToolTip.Tip="Версия, обновления, наши проекты" Margin="0,0,6,0">
+            <Grid>
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Border Width="13" Height="13" CornerRadius="7" BorderThickness="1.2" VerticalAlignment="Center"
+                        BorderBrush="{Binding $parent[ContentPresenter].Foreground}">
+                  <TextBlock Text="i" FontFamily="Georgia, Times New Roman" FontStyle="Italic" FontWeight="Bold" FontSize="9"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="О программе" VerticalAlignment="Center"/>
+              </StackPanel>
+              <Ellipse Width="7" Height="7" Fill="#fad9a6" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,-6,0"
+                       IsVisible="{Binding UpdateDot}" ToolTip.Tip="Есть новая версия"/>
+            </Grid>
+          </Button>
+          <Button Classes="win" Content="—" Click="Minimize_Click" ToolTip.Tip="Свернуть"/>
+          <Button Classes="win close" Content="✕" Click="Close_Click" ToolTip.Tip="Закрыть"/>
+        </StackPanel>
+      </Grid>
+
+      <!-- ЭТАЖ 2. Тело: одна кнопка-состояние, под ней действия и подсказка -->
+      <Grid Grid.Row="1" Margin="32,8">
+        <Grid.Background>
+          <RadialGradientBrush Center="50%,38%" GradientOrigin="50%,38%" RadiusX="55%" RadiusY="70%">
+            <GradientStop Color="#48341410" Offset="0"/>
+            <GradientStop Color="#00210c0b" Offset="1"/>
+          </RadialGradientBrush>
+        </Grid.Background>
+        <StackPanel Width="370" VerticalAlignment="Center">
+
+          <Grid Height="72">
+            <!-- УСТАНОВИТЬ / ИГРАТЬ / ОБНОВИТЬ -->
+            <Border IsVisible="{Binding PrimaryVisible}" CornerRadius="5" BoxShadow="0 0 24 0 #1fd59836">
+              <Button Classes="primary" IsEnabled="{Binding PrimaryEnabled}" Click="Primary_Click">
+                <TextBlock Text="{Binding PrimaryLabel}" FontSize="17" FontWeight="Bold" LetterSpacing="2.5"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2.5,0,0,0"/>
+              </Button>
+            </Border>
+            <Rectangle Height="1" VerticalAlignment="Top" Margin="55,0" IsVisible="{Binding PrimaryVisible}" IsHitTestVisible="False">
+              <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                  <GradientStop Color="#00ffe9c2" Offset="0"/>
+                  <GradientStop Color="#b3ffe9c2" Offset="0.5"/>
+                  <GradientStop Color="#00ffe9c2" Offset="1"/>
+                </LinearGradientBrush>
+              </Rectangle.Fill>
+            </Rectangle>
+            <Viewbox Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,23,0"
+                     IsVisible="{Binding ShowInstallIcon}" IsHitTestVisible="False" Opacity="0.9">
+              <Canvas Width="24" Height="24"><Path Data="{StaticResource IconInstall}" Stroke="#edc787" StrokeThickness="1.6" StrokeLineCap="Square" StrokeJoin="Miter"/></Canvas>
+            </Viewbox>
+            <Viewbox Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,23,0"
+                     IsVisible="{Binding ShowPlayIcon}" IsHitTestVisible="False" Opacity="0.9">
+              <Canvas Width="24" Height="24"><Path Data="{StaticResource IconPlay}" Stroke="#edc787" StrokeThickness="1.6" StrokeLineCap="Square" StrokeJoin="Miter"/></Canvas>
+            </Viewbox>
+
+            <!-- ПРОВЕРКА / УСТАНОВКА: полоса -->
+            <Border IsVisible="{Binding IsBusy}" CornerRadius="5" BorderThickness="1" BorderBrush="#a57f50"
+                    BoxShadow="0 0 22 0 #15d59836" ClipToBounds="True">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                  <GradientStop Color="#993a1e10" Offset="0"/>
+                  <GradientStop Color="#a630150b" Offset="1"/>
+                </LinearGradientBrush>
+              </Border.Background>
+              <Grid>
+                <Border HorizontalAlignment="Left" Width="{Binding ProgressWidth}" BorderThickness="0,0,1,0" BorderBrush="#9ce9bc6c">
+                  <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                      <GradientStop Color="#337f4e1d" Offset="0"/>
+                      <GradientStop Color="#529c7336" Offset="1"/>
+                    </LinearGradientBrush>
+                  </Border.Background>
+                  <Rectangle Height="2" VerticalAlignment="Bottom" Fill="#f2cd87"/>
+                </Border>
+                <Grid ColumnDefinitions="*,Auto" Margin="23,0">
+                  <StackPanel VerticalAlignment="Center" Spacing="7">
+                    <TextBlock Text="{Binding ProgressStatus}" FontSize="13" FontWeight="SemiBold" Foreground="#eee0d2"/>
+                    <TextBlock Text="{Binding ProgressSource}" FontSize="10" LetterSpacing="0.25" Foreground="#c3a993"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ProgressPercent}" FontFamily="{StaticResource Mono}" FontSize="24" Foreground="#fbe9d0" LetterSpacing="-1.4"/>
+                    <TextBlock Text="%" FontSize="12" Foreground="#d3b993" VerticalAlignment="Bottom" Margin="3,0,0,3"/>
+                  </StackPanel>
+                </Grid>
+              </Grid>
+            </Border>
+
+            <!-- ОШИБКА -->
+            <Border IsVisible="{Binding IsError}" CornerRadius="5" BorderThickness="1" BorderBrush="#c6745d"
+                    BoxShadow="0 0 24 0 #14e3754f">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                  <GradientStop Color="#7533221e" Offset="0"/>
+                  <GradientStop Color="#70281b19" Offset="1"/>
+                </LinearGradientBrush>
+              </Border.Background>
+              <Grid>
+                <TextBlock Text="{Binding ErrorLabel}" FontSize="14" FontWeight="Bold" LetterSpacing="1.2" Foreground="#efb29f"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,30,0"/>
+                <Viewbox Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,23,0" Opacity="0.9">
+                  <Canvas Width="24" Height="24"><Path Data="{StaticResource IconError}" Stroke="#e18a70" StrokeThickness="1.6" StrokeLineCap="Square" StrokeJoin="Miter"/></Canvas>
+                </Viewbox>
+              </Grid>
+            </Border>
+          </Grid>
+
+          <!-- действия под кнопкой -->
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0" Spacing="6">
+            <Button Classes="link" Content="Что ставится" Click="Info_Click" IsVisible="{Binding !IsError}"/>
+            <Button Classes="link danger" Content="Удалить перевод" Click="Remove_Click" IsVisible="{Binding RemoveVisible}"
+                    ToolTip.Tip="Вернуть a.arc и d.arc к оригиналу"/>
+            <Button Classes="link" Content="Проверить снова" Click="Retry_Click" IsVisible="{Binding RetryVisible}"/>
+          </StackPanel>
+
+          <TextBlock Text="{Binding Hint}" IsVisible="{Binding !IsError}" FontSize="10" Foreground="#b6988f" MinHeight="14"
+                     Margin="0,4,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+          <TextBlock Text="{Binding MenuNote}" IsVisible="{Binding MenuNoteVisible}" FontSize="10.5" FontWeight="SemiBold" Foreground="#e3c47e"
+                     Margin="0,2,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+          <TextBlock Text="{Binding ErrorDetail}" IsVisible="{Binding IsError}" FontSize="10" Foreground="#b08f85"
+                     HorizontalAlignment="Center" Margin="0,4,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+        </StackPanel>
+      </Grid>
+
+      <!-- «Что ставится»: поверх тела -->
+      <Border Grid.Row="1" IsVisible="{Binding InfoOpen}" Background="#210c0b" Padding="32,10">
+        <Grid RowDefinitions="Auto,*" Width="560">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="ЧТО СТАВИТСЯ" FontSize="11" FontWeight="SemiBold" LetterSpacing="1" Foreground="#e7d8d1" VerticalAlignment="Center"/>
+            <Button Grid.Column="1" Classes="win close" Content="✕" Click="InfoClose_Click" ToolTip.Tip="Закрыть"/>
+          </Grid>
+          <StackPanel Grid.Row="1" Spacing="7" Margin="0,8,0,0">
+            <TextBlock TextWrapping="Wrap" FontSize="10.5" LineHeight="15" Foreground="#d5c0b7"
+                       Text="Переводится: субтитры роликов и брифингов, радиопереговоры, дебрифинги, меню и Assault Records, часть картинок."/>
+            <TextBlock TextWrapping="Wrap" FontSize="10.5" LineHeight="15" Foreground="#d5c0b7"
+                       Text="Остаются английскими: надписи HUD в бою (SCORE, SPEED…) и пункты меню паузы — задачи миссии в паузе русские. Эти надписи зашиты в саму программу игры (acz.exe), а её лаунчер не меняет."/>
+            <TextBlock TextWrapping="Wrap" FontSize="10.5" LineHeight="15" Foreground="#d5c0b7"
+                       Text="Язык: русский встаёт на место английского (UK). Лаунчер ставит языком игры UK (ACZero\settings\setting.ini, SystemLanguage=UK) — меню становится русским, а игра называется по-европейски: ACE COMBAT THE BELKAN WAR. Субтитры можно оставить английскими (АНГЛ. США). «Удалить перевод» вернёт прежний язык."/>
+            <TextBlock TextWrapping="Wrap" FontSize="10.5" LineHeight="15" Foreground="#b6988f"
+                       Text="Как: новые файлы дописываются в конец a.arc и d.arc, старые остаются на месте. «Удалить перевод» обрезает архивы до исходной длины — файлы снова побайтно оригинальные. Steam «Проверить целостность файлов» тоже вернёт оригинал."/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- «О программе» и «Наши проекты»: поверх тела -->
+      <!-- поверх тела и подвала: при раскрытой папке игры тело ~190 px, и окно не влезало (как в PW 1.0.7) -->
+      <Border Grid.Row="1" Grid.RowSpan="2" ZIndex="10" IsVisible="{Binding AboutOpen}" Background="#210c0b" Padding="32,8">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto" Width="480">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="2" VerticalAlignment="Center">
+              <TextBlock Text="ACE COMBAT ZERO — РУССКИЙ ПЕРЕВОД" FontSize="11" FontWeight="SemiBold" LetterSpacing="1" Foreground="#e7d8d1"/>
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="{Binding AppVersionText}" FontSize="10" Foreground="#c3a993"/>
+                <TextBlock Text="· VGS Studio" FontSize="10" Foreground="#c3a993"/>
+              </StackPanel>
+            </StackPanel>
+            <Button Grid.Column="1" Classes="win close" Content="✕" Click="AboutClose_Click" VerticalAlignment="Top" ToolTip.Tip="Закрыть"/>
+          </Grid>
+          <TextBlock Grid.Row="1" TextWrapping="Wrap" FontSize="10" LineHeight="14" Foreground="#b6988f" Margin="0,6,0,0"
+                     Text="Неофициальный русский перевод. Перевод внутри лаунчера, он ничего не скачивает. Исходный код открыт. ACE COMBAT принадлежит Bandai Namco Entertainment."/>
+
+          <!-- карусель «Наши проекты» -->
+          <StackPanel Grid.Row="2" Margin="0,8,0,0" Spacing="4">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="НАШИ ПРОЕКТЫ" FontSize="9" LetterSpacing="1.5" Foreground="#c3a993" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="{Binding ProjectCounter}" FontFamily="{StaticResource Mono}" FontSize="9" Foreground="#96796f"/>
+            </Grid>
+            <Border CornerRadius="4" BorderThickness="1" BorderBrush="#4b312b" Background="#29100d" Padding="4,6">
+              <Grid ColumnDefinitions="28,*,Auto,28">
+                <Button Classes="win" Width="26" Height="40" Click="ProjectPrev_Click" ToolTip.Tip="Назад">
+                  <Viewbox Width="12" Height="12"><Canvas Width="24" Height="24"><Path Data="{StaticResource IconLeft}" Stroke="#c0a79a" StrokeThickness="2"/></Canvas></Viewbox>
+                </Button>
+                <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center" Margin="6,0">
+                  <TextBlock Text="{Binding Project.Title}" FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5" Foreground="#f2e8e3"/>
+                  <TextBlock Text="{Binding Project.Subtitle}" FontSize="9.5" TextWrapping="Wrap" Foreground="#b6988f"/>
+                </StackPanel>
+                <Button Grid.Column="2" Classes="browse" Width="84" Height="30" Content="{Binding Project.UrlLabel}" Click="ProjectOpen_Click"
+                        ToolTip.Tip="{Binding Project.Url}" VerticalAlignment="Center"/>
+                <Button Grid.Column="3" Classes="win" Width="26" Height="40" Click="ProjectNext_Click" ToolTip.Tip="Дальше">
+                  <Viewbox Width="12" Height="12"><Canvas Width="24" Height="24"><Path Data="{StaticResource IconChevron}" Stroke="#c0a79a" StrokeThickness="2"/></Canvas></Viewbox>
+                </Button>
+              </Grid>
+            </Border>
+          </StackPanel>
+
+          <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" Margin="0,8,0,0">
+            <Button Classes="browse" Width="112" Content="Исходный код" Click="Repo_Click" ToolTip.Tip="{Binding RepoUrl}"/>
+            <TextBlock Grid.Column="1" Text="{Binding UpdateStatus}" FontSize="10" Foreground="#bca39a" VerticalAlignment="Center" TextWrapping="Wrap" Margin="10,0"/>
+            <Button Grid.Column="2" Classes="browse" Width="164" Content="{Binding UpdateActionLabel}" IsEnabled="{Binding UpdateActionEnabled}" Click="UpdateAction_Click"/>
+          </Grid>
+        </Grid>
+      </Border>
+
+      <!-- ЭТАЖ 3. Подвал: путь к игре -->
+      <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="#3f2622" Background="#b81d0a09">
+        <StackPanel>
+          <Button Classes="flat" Height="{Binding PathOpen, Converter={x:Static local:Converters.OpenToSummaryHeight}}"
+                  Padding="25,0" Click="Path_Click" ToolTip.Tip="Путь к игре">
+            <Viewbox Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Center">
+              <Canvas Width="24" Height="24">
+                <Path Classes="chevron" Classes.open="{Binding PathOpen}" Data="{StaticResource IconChevron}"
+                      StrokeThickness="1.6" StrokeLineCap="Square" StrokeJoin="Miter"/>
+              </Canvas>
+            </Viewbox>
+          </Button>
+          <StackPanel IsVisible="{Binding PathOpen}" Margin="25,0,25,10" Spacing="4">
+            <Grid ColumnDefinitions="Auto,*,92">
+              <TextBlock Text="Папка ACZero" FontSize="11" Foreground="#bca39a" VerticalAlignment="Center" Margin="0,0,10,0"/>
+              <TextBox Grid.Column="1" Classes="path" Classes.invalid="{Binding PathInvalid}" Text="{Binding GamePath, Mode=TwoWay}" Margin="0,0,10,0"
+                       ToolTip.Tip="{Binding PathHint}" Watermark="…\steamapps\common\ACE COMBAT ZERO THE BELKAN WAR (Steam Version)\ACZero"/>
+              <Button Grid.Column="2" Classes="browse" IsEnabled="{Binding BrowseEnabled}" Click="Browse_Click">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                  <Viewbox Width="16" Height="16" VerticalAlignment="Center">
+                    <Canvas Width="24" Height="24"><Path Data="{StaticResource IconFolder}" Stroke="#d7c3b7" StrokeThickness="1.6" StrokeLineCap="Square" StrokeJoin="Miter"/></Canvas>
+                  </Viewbox>
+                  <TextBlock Text="Обзор" VerticalAlignment="Center"/>
+                </StackPanel>
+              </Button>
+            </Grid>
+            <TextBlock Text="{Binding PathHint}" FontSize="9.5" Foreground="#a3887f" TextTrimming="CharacterEllipsis"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+</Window>

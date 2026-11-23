@@ -1,0 +1,76 @@
+# Релиз лаунчера русского перевода Ace Combat Zero. Собирается здесь, а не на машине разработчика:
+# exe в релизе = этот исходник на этом теге.
+# Запуск: git tag acz-v1.2.3 && git push origin acz-v1.2.3
+#
+# Свой репозиторий ACZ (с 23.11 отдельно от лаунчера Project Wingman, чтобы жалоба на одно не задела другое).
+# Лаунчер ACZ берёт список релизов и оставляет только теги acz-v*.
+name: release-acz
+
+on:
+  push:
+    tags: ["acz-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Версия из тега
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -notmatch '^acz-v(\d+\.\d+\.\d+)$') { throw "tag must be acz-vX.Y.Z, got $tag" }
+          "version=$($Matches[1])" >> $env:GITHUB_OUTPUT
+
+      - name: Модуль acz.exe (сборка и тесты без игры)
+        shell: cmd
+        run: |
+          call module\build.cmd || exit /b 1
+          module\build\patchtest.exe || exit /b 1
+          module\build\proxytest.exe module\build\version.dll || exit /b 1
+
+      - name: Тесты ядра (синтетические архивы)
+        shell: pwsh
+        run: dotnet test tests/ACZRuLauncher.Tests/ACZRuLauncher.Tests.csproj -c Release
+
+      - name: Сборка exe
+        shell: pwsh
+        run: dotnet publish src/ACZRuLauncher.App/ACZRuLauncher.App.csproj -c Release -o dist/raw -p:Version=${{ steps.ver.outputs.version }}
+
+      - name: Пакет перевода по манифесту (скачать и сверить sha256)
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/fetch_pack.py pack/manifest.json dist/pack
+
+      - name: Пакет в хвост exe
+        shell: pwsh
+        run: |
+          python tools/pack.py --pack dist/pack/acz-ru-pack.zip --exe dist/raw/ACZRuLauncher.exe --exe-out dist/ACZRuLauncher.exe
+          $sha = (Get-FileHash dist/ACZRuLauncher.exe -Algorithm SHA256).Hash.ToLower()
+          "$sha  ACZRuLauncher.exe" | Out-File -Encoding ascii -NoNewline dist/ACZRuLauncher.exe.sha256
+          Get-Content dist/ACZRuLauncher.exe.sha256
+
+      - name: Релиз
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Ace Combat Zero — русский перевод v${{ steps.ver.outputs.version }}"
+          body: |
+            Русский перевод Ace Combat Zero (Steam). Скачайте `ACZRuLauncher.exe` и запустите: перевод уже внутри.
+            Контрольная сумма — `ACZRuLauncher.exe.sha256`. Как это устроено — README репозитория.
+          files: |
+            dist/ACZRuLauncher.exe
+            dist/ACZRuLauncher.exe.sha256
