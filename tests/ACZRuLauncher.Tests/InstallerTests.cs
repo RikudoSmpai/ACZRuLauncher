@@ -155,6 +155,47 @@ namespace ACZRuLauncher.Tests
         }
 
         [Fact]
+        public void ReadOnlyArchives_AttributeCleared_InstallAndRemoveWork()
+        {
+            var w = Make();
+            File.SetAttributes(w.A, File.GetAttributes(w.A) | FileAttributes.ReadOnly);   // файлы раздачи торрента (Сёма 24.11)
+            File.SetAttributes(w.D, File.GetAttributes(w.D) | FileAttributes.ReadOnly);
+            var inst = w.Installer();
+            inst.Install(NoProgress, CancellationToken.None);
+            Assert.Equal(Overall.Installed, inst.Inspect().Overall);
+            Assert.Equal((FileAttributes)0, File.GetAttributes(w.A) & FileAttributes.ReadOnly);
+            File.SetAttributes(w.A, File.GetAttributes(w.A) | FileAttributes.ReadOnly);   // и на удалении
+            inst.Remove(NoProgress, CancellationToken.None);
+            AssertOriginal(w);
+        }
+
+        [Fact]
+        public void ArchiveLocked_ClearErrorBeforeAnyWrite_NoRollbackAlarm()
+        {
+            var w = Make();
+            var inst = w.Installer();
+            InstallException ex;
+            using (new FileStream(w.D, FileMode.Open, FileAccess.Read, FileShare.Read))      // d.arc держит другая программа
+                ex = Assert.Throws<InstallException>(() => inst.Install(NoProgress, CancellationToken.None));
+            Assert.Contains("d.arc", ex.Message);
+            Assert.DoesNotContain("Вернуть оригинал", ex.Message);
+            Assert.DoesNotContain("Установка не удалась", ex.Message);                      // упало на проверке, до записи
+            AssertOriginal(w);
+        }
+
+        [Fact]
+        public void FailureOnFirstArchive_SecondNotTouched_HonestMessage()
+        {
+            var w = Make();
+            var inst = w.Installer();
+            inst.AfterTableWritten = name => { if (name == "a.arc") throw new IOException("обрыв записи (тест)"); };
+            var ex = Assert.Throws<InstallException>(() => inst.Install(NoProgress, CancellationToken.None));
+            Assert.Contains("возвращены к оригиналу", ex.Message);
+            Assert.DoesNotContain("не удалось —", ex.Message);
+            AssertOriginal(w);
+        }
+
+        [Fact]
         public void FailureDuringWrite_RollsBackBothArchives()
         {
             var w = Make();

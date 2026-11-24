@@ -303,12 +303,16 @@ namespace ACZRuLauncher.Core
             if (free >= 0 && free < need)
                 throw new IOException($"Мало места на диске с игрой: свободно {free >> 20} МБ, нужно {need >> 20} МБ.");
 
-            // 4. бэкап областей всех архивов — до первой записи
+            // 4. права на запись и бэкап областей всех архивов — до первой записи.
+            //    «Только чтение» у файлов раздачи снимаем сами; если запись всё равно запрещена — понятная ошибка
+            //    здесь, пока архивы не тронуты (24.11: иначе ложное «вернуть оригинал не удалось» про целые файлы).
             EnsureGameClosed();
+            foreach (var p in patches) EnsureWritable(p.Name);
             foreach (var p in patches) WriteBackup(p.Name, p.Spec, p.Patch);
             Log("бэкап областей: " + BackupDir);
 
-            // 5. запись и проверка; при любой ошибке — все архивы пакета к оригиналу
+            // 5. запись и проверка; при любой ошибке — к оригиналу те архивы, до которых дошла запись
+            var touched = new List<string>();
             try
             {
                 for (int i = 0; i < patches.Count; i++)
@@ -317,6 +321,7 @@ namespace ACZRuLauncher.Core
                     var (name, patch, spec) = patches[i];
                     var sub = Scale(progress, 0.6 + 0.4 * i / patches.Count, 0.6 + 0.4 * (i + 1) / patches.Count);
                     sub.Report(new InstallProgress($"Записываю {name}…", 0));
+                    touched.Add(name);
                     WritePatch(name, patch);
                     var sha = Verify(name, patch, spec, sub);
                     Save(Bpath(name, "installed.json"), new InstalledInfo
@@ -333,6 +338,8 @@ namespace ACZRuLauncher.Core
                 var failed = new List<string>();
                 foreach (var p in patches)
                 {
+                    if (!touched.Contains(p.Name)) continue;                         // запись до него не дошла
+                    if (IsOriginal(p.Name, p.Spec)) { Log($"{p.Name}: не изменён — откат не нужен"); continue; }
                     try { RestoreOne(p.Name, p.Spec); }
                     catch (Exception rex) { failed.Add(p.Name); Log($"{p.Name}: откат не удался: {rex.Message}"); }
                 }
@@ -635,6 +642,7 @@ namespace ACZRuLauncher.Core
                 throw new InstallException($"{name}: откат не даст оригинал (файл изменён не нами). " +
                                            "Steam → Свойства игры → Установленные файлы → «Проверить целостность файлов».");
             EnsureGameClosed();
+            ClearReadOnly(path);
             var table = File.ReadAllBytes(Bpath(name, "table.bin"));
             var trailer = File.ReadAllBytes(Bpath(name, "trailer.bin"));
             using (var f = OpenForWrite(path))
@@ -659,6 +667,35 @@ namespace ACZRuLauncher.Core
             if (!IsGameRunning()) return;
             Log("отказ: игра запущена");
             throw new InstallException("Игра запущена — закройте Ace Combat Zero и повторите.");
+        }
+
+        /// <summary>Перед записью: снять «только чтение» (у файлов раздачи торрента он бывает) и проверить, что архив
+        /// открывается на запись. Бросает понятный InstallException — до бэкапа, архивы не тронуты.</summary>
+        private void EnsureWritable(string name)
+        {
+            var path = Target(name);
+            ClearReadOnly(path);
+            using (OpenForWrite(path)) { }
+        }
+
+        private static void ClearReadOnly(string path)
+        {
+            try
+            {
+                var a = File.GetAttributes(path);
+                if ((a & FileAttributes.ReadOnly) == 0) return;
+                File.SetAttributes(path, a & ~FileAttributes.ReadOnly);
+                Log($"{System.IO.Path.GetFileName(path)}: снят атрибут «только чтение»");
+            }
+            catch (Exception ex) { Log($"{System.IO.Path.GetFileName(path)}: снять «только чтение» не удалось: {ex.Message}"); }
+        }
+
+        /// <summary>Архив по-прежнему оригинал: размер и sha256 (кэш по размеру и времени — после неудачной записи дёшево).</summary>
+        private bool IsOriginal(string name, PackArchive spec)
+        {
+            var path = Target(name);
+            try { return new FileInfo(path).Length == spec.OrigSize && ShaCache.Get(path, null).Sha256 == spec.OrigSha256; }
+            catch { return false; }
         }
 
         private static FileStream OpenForWrite(string path)

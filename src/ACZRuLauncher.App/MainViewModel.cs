@@ -77,7 +77,11 @@ namespace ACZRuLauncher
             _suppressPath = false;
             PathValid = _game != null;
             PathHint = _game != null ? GameHint(_game) : "Автопоиск не нашёл игру. Укажите папку ACZero.";
-            if (_game == null) PathOpen = true;
+            if (_game == null)
+            {
+                PathOpen = true;
+                if (gameOverride == null) InstallLog.Write("автопоиск: игра не найдена (библиотеки Steam и папка лаунчера) — нужно указать папку ACZero");
+            }
             _ = RefreshAsync();
         }
 

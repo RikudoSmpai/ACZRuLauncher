@@ -509,8 +509,15 @@
 
           <TextBlock Text="{Binding Hint}" IsVisible="{Binding !IsError}" FontSize="10" Foreground="#b6988f" MinHeight="14"
                      Margin="0,4,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
-          <TextBlock Text="{Binding MenuNote}" IsVisible="{Binding MenuNoteVisible}" FontSize="10.5" FontWeight="SemiBold" Foreground="#e3c47e"
-                     Margin="0,2,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+          <!-- язык меню (в т. ч. «запустите игру один раз»): плашкой с рамкой — строку под кнопкой не замечали (Сёма 24.11) -->
+          <Border IsVisible="{Binding MenuNoteVisible}" Margin="0,8,0,0" Padding="12,7" CornerRadius="4" HorizontalAlignment="Center"
+                  BorderThickness="1" BorderBrush="#b8894a" Background="#2c1d0e">
+            <StackPanel Orientation="Horizontal" Spacing="9">
+              <TextBlock Text="!" FontSize="14" FontWeight="Bold" Foreground="#f0c674" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding MenuNote}" FontSize="11.5" FontWeight="SemiBold" Foreground="#f3d491" MaxWidth="320"
+                         TextWrapping="Wrap" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
           <TextBlock Text="{Binding ErrorDetail}" IsVisible="{Binding IsError}" FontSize="10" Foreground="#b08f85"
                      HorizontalAlignment="Center" Margin="0,4,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
         </StackPanel>
